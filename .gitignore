@@ -1,0 +1,55 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/settings.json
+*.DotSettings.user
+TestResults/
+coverage/
+
+# Frontend
+node_modules/
+dist/
+.pnpm-store/
+frontend/dist/
+frontend/.env.local
+
+# Terraform
+infra/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.backup
+infra/**/.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Docker
+docker-compose.override.yml
+
+# macOS
+.DS_Store
+
+# JetBrains
+.idea/
+
+# Logs
+logs/
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# Custom
+.cursor/
+.claude/
+docs/
+.ai-devkit.json
+e-comerce-product-management-prd.md

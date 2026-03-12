@@ -1,0 +1,104 @@
+# name: Backend CI
+
+# on:
+#   push:
+#     branches: [master, main]
+#     paths:
+#       - "src/**"
+#       - "tests/**"
+#       - "*.sln"
+#       - "*.slnx"
+#       - "global.json"
+#       - "Directory.Build.props"
+#       - ".github/workflows/backend.yml"
+#   pull_request:
+#     branches: [master, main]
+#     paths:
+#       - "src/**"
+#       - "tests/**"
+#       - "*.sln"
+#       - "*.slnx"
+#       - "global.json"
+#       - "Directory.Build.props"
+#       - ".github/workflows/backend.yml"
+
+# jobs:
+#   build-and-test:
+#     name: Build & Test
+#     runs-on: ubuntu-latest
+
+#     services:
+#       postgres:
+#         image: postgres:17-alpine
+#         env:
+#           POSTGRES_USER: productmgmt
+#           POSTGRES_PASSWORD: productmgmt_test
+#           POSTGRES_DB: productmanagement_test
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd "pg_isready -U productmgmt"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+
+#       redis:
+#         image: redis:7-alpine
+#         ports:
+#           - 6379:6379
+#         options: >-
+#           --health-cmd "redis-cli ping"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup .NET
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           global-json-file: global.json
+
+#       - name: Restore dependencies
+#         run: dotnet restore
+
+#       - name: Check formatting
+#         run: dotnet format --verify-no-changes --severity warn
+
+#       - name: Build
+#         run: dotnet build --no-restore -c Release
+
+#       - name: Test
+#         run: dotnet test --no-build -c Release --logger "trx;LogFileName=test-results.trx" --results-directory TestResults
+#         env:
+#           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=productmanagement_test;Username=productmgmt;Password=productmgmt_test"
+#           ConnectionStrings__Redis: "localhost:6379"
+
+#       - name: Upload test results
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: test-results
+#           path: TestResults/*.trx
+
+#   docker-build:
+#     name: Docker Build Validation
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Build API image
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: .
+#           file: src/ProductManagement.API/Dockerfile
+#           push: false
+#           tags: product-management-api:ci
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=max
