@@ -1,0 +1,138 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/ProductManagement.slnx", "-c", "Debug", "--no-restore"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "restore",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["restore", "${workspaceFolder}/ProductManagement.slnx"],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "publish",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/src/ProductManagement.API/ProductManagement.API.csproj",
+        "-c", "Release",
+        "-o", "${workspaceFolder}/publish"
+      ],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "restore"
+    },
+    {
+      "label": "test: all",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "${workspaceFolder}/ProductManagement.slnx", "--no-build", "-v", "minimal"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "test", "isDefault": true },
+      "dependsOn": "build"
+    },
+    {
+      "label": "test: domain",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/tests/ProductManagement.Domain.Tests/ProductManagement.Domain.Tests.csproj",
+        "--no-build", "-v", "minimal"
+      ],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "build"
+    },
+    {
+      "label": "test: application",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/tests/ProductManagement.Application.Tests/ProductManagement.Application.Tests.csproj",
+        "--no-build", "-v", "minimal"
+      ],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "build"
+    },
+    {
+      "label": "test: integration",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/tests/ProductManagement.Integration.Tests/ProductManagement.Integration.Tests.csproj",
+        "--no-build", "-v", "minimal"
+      ],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "build"
+    },
+    {
+      "label": "test: coverage",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/ProductManagement.slnx",
+        "--collect", "XPlat Code Coverage",
+        "--results-directory", "${workspaceFolder}/coverage"
+      ],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "build"
+    },
+    {
+      "label": "watch: api",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "--project", "${workspaceFolder}/src/ProductManagement.API/ProductManagement.API.csproj",
+        "run"
+      ],
+      "problemMatcher": "$msCompile",
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "docker: up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "docker: down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "ef: migrations list",
+      "type": "shell",
+      "command": "dotnet ef migrations list --project src/ProductManagement.Infrastructure --startup-project src/ProductManagement.API",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "ef: database update",
+      "type": "shell",
+      "command": "dotnet ef database update --project src/ProductManagement.Infrastructure --startup-project src/ProductManagement.API",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    }
+  ]
+}
