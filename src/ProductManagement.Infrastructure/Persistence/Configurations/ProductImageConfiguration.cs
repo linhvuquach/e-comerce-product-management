@@ -25,6 +25,7 @@ internal sealed class ProductImageConfiguration : IEntityTypeConfiguration<Produ
 
         // Mirror the Product soft-delete filter so direct queries on images
         // also exclude images belonging to soft-deleted products.
-        builder.HasQueryFilter(i => !i.Product.IsDeleted);
+        // TODO: [EPM-13] Fix: IsDeleted Column and Filter for All Entities
+        // builder.HasQueryFilter(i => !i.Product.IsDeleted);
     }
 }

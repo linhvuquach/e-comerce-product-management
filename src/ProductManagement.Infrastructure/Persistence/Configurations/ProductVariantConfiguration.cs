@@ -60,6 +60,7 @@ internal sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Pro
 
         // Mirror the Product soft-delete filter so direct queries on variants
         // also exclude variants belonging to soft-deleted products.
-        builder.HasQueryFilter(v => !v.Product.IsDeleted);
+        // // TODO: [EPM-13] Fix: IsDeleted Column and Filter for All Entities
+        // builder.HasQueryFilter(v => !v.Product.IsDeleted);
     }
 }

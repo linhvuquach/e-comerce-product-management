@@ -96,6 +96,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasFilter("deleted_at IS NULL")
             .HasDatabaseName("idx_products_base_price");
 
-        builder.HasQueryFilter(p=> !p.IsDeleted);
+        // TODO: [EPM-13] Fix: IsDeleted Column and Filter for All Entities
+        // builder.HasQueryFilter(p=> !p.IsDeleted);
     }
 }

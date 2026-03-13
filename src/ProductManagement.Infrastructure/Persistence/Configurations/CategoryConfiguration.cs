@@ -46,6 +46,7 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasDatabaseName("idx_categories_parent");
 
         // Global soft-delete filter
-        builder.HasQueryFilter(c => !c.IsDeleted);
+        // TODO: [EPM-13] Fix: IsDeleted Column and Filter for All Entities
+        // builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }
