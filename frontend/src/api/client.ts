@@ -17,7 +17,7 @@ export interface ApiError {
 const apiClient = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15_000,
+  timeout: 15_000, // 15 seconds
 })
 
 // Normalise all error responses to RFC 7807 ProblemDetails shape
