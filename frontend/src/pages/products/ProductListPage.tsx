@@ -1,22 +1,38 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router'
 import { useProducts } from '../../features/products/hooks/useProducts'
 import ProductTable from '../../features/products/components/ProductTable'
 import EmptyState from '../../components/ui/EmptyState'
+import SearchBar from '../../components/ui/SearchBar'
+import { useDebounce } from '../../lib/hooks/useDebounce'
 
 export default function ProductListPage() {
+  const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 20
 
-  const { data, isLoading, isError } = useProducts({ page, pageSize })
+  const q = useDebounce(searchInput, 300)
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value)
+    setPage(1)
+  }, [])
+
+  const { data, isLoading, isError } = useProducts({
+    q: q || undefined,
+    page,
+    pageSize,
+  })
 
   if (isError) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-        Failed to load products. Check that the API is running.
+        Failed to load products. Please try again later.
       </div>
     )
   }
+
+  const isEmpty = !isLoading && (data?.totalItems ?? 0) === 0
 
   return (
     <div className="space-y-4">
@@ -30,7 +46,14 @@ export default function ProductListPage() {
         </Link>
       </div>
 
-      {!isLoading && data?.totalItems === 0 ? (
+      <SearchBar
+        value={searchInput}
+        onChange={handleSearchChange}
+        placeholder="Search products…"
+        className="max-w-md"
+      />
+
+      {isEmpty && !q ? (
         <EmptyState
           title="No products yet"
           description="Create your first product to get started."
@@ -42,6 +65,11 @@ export default function ProductListPage() {
               + New Product
             </Link>
           }
+        />
+      ) : isEmpty ? (
+        <EmptyState
+          title="No results"
+          description={`No products match "${q}". Try a different search term.`}
         />
       ) : (
         <ProductTable
