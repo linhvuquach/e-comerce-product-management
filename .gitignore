@@ -46,10 +46,3 @@ logs/
 # NuGet
 *.nupkg
 *.snupkg
-
-# Custom
-.cursor/
-.claude/
-docs/
-.ai-devkit.json
-e-comerce-product-management-prd.md
