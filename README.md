@@ -726,6 +726,7 @@ graph TD
 
 ## Technical Considerations
 
+```
 1x (current)            10x                          100x
 ─────────────           ─────────────                ─────────────
 Single PostgreSQL    →  Primary + read replicas   →  Primary + denormalised read model DB
