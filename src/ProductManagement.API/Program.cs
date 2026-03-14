@@ -1,11 +1,16 @@
 using Asp.Versioning;
 using Carter;
 using ProductManagement.API.Middleware;
+using ProductManagement.API.Options;
 using ProductManagement.Application;
 using ProductManagement.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var corsSettings = builder.Configuration
+    .GetSection(CorsSettings.Section)
+    .Get<CorsSettings>() ?? new CorsSettings();
 
 // Infrastructure & Application
 builder.Services.AddApplication();
@@ -22,6 +27,16 @@ builder.Services.AddApiVersioning(options =>
 
 // OpenAPI
 builder.Services.AddOpenApi();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsSettings.PolicyName, policy =>
+        policy.WithOrigins(corsSettings.AllowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithExposedHeaders("ETag"));
+});
 
 // Carter
 builder.Services.AddCarter();
@@ -48,6 +63,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(CorsSettings.PolicyName);
 
 app.MapCarter();
 app.MapHealthChecks("/health");
