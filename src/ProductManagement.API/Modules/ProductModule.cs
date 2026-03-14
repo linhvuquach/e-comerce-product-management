@@ -2,6 +2,7 @@ using System.Text.Json;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ProductManagement.API.Options;
 using ProductManagement.Application.Products.Commands.CreateProduct;
 using ProductManagement.Application.Products.Commands.DeleteProduct;
 using ProductManagement.Application.Products.Commands.PatchProductStatus;
@@ -34,7 +35,9 @@ public sealed class ProductModule : ICarterModule
             .WithName("CreateProduct")
             .WithSummary("Create a new product")
             .Produces<Guid>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status400BadRequest);
+            .Produces(StatusCodes.Status400BadRequest)
+            .RequireRateLimiting(RateLimitSettings.WritePolicyName)
+            .RequireAuthorization();
 
         group.MapPut("/{id:guid}", UpdateProductAsync)
             .WithName("UpdateProduct")
@@ -43,7 +46,9 @@ public sealed class ProductModule : ICarterModule
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict)
-            .Produces(StatusCodes.Status428PreconditionRequired);
+            .Produces(StatusCodes.Status428PreconditionRequired)
+            .RequireRateLimiting(RateLimitSettings.WritePolicyName)
+            .RequireAuthorization();
 
         group.MapPatch("/{id:guid}/status", PatchProductStatusAsync)
             .WithName("PatchProductStatus")
@@ -51,13 +56,17 @@ public sealed class ProductModule : ICarterModule
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status422UnprocessableEntity);
+            .Produces(StatusCodes.Status422UnprocessableEntity)
+            .RequireRateLimiting(RateLimitSettings.WritePolicyName)
+            .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", DeleteProductAsync)
             .WithName("DeleteProduct")
             .WithSummary("Soft-delete a product")
             .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status404NotFound);
+            .Produces(StatusCodes.Status404NotFound)
+            .RequireRateLimiting(RateLimitSettings.WritePolicyName)
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> GetProductsAsync(

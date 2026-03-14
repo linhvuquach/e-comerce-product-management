@@ -35,30 +35,30 @@ services:
       timeout: 5s
       retries: 5
 
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite:latest
-    container_name: pm_azurite
-    restart: unless-stopped
-    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose
-    ports:
-      - "${AZURITE_PORT_BLOB:-10000}:10000"
-      - "${AZURITE_PORT_QUEUE:-10001}:10001"
-      - "${AZURITE_PORT_TABLE:-10002}:10002"
-    volumes:
-      - azurite_data:/data
+  # azurite:
+  #   image: mcr.microsoft.com/azure-storage/azurite:latest
+  #   container_name: pm_azurite
+  #   restart: unless-stopped
+  #   command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose
+  #   ports:
+  #     - "${AZURITE_PORT_BLOB:-10000}:10000"
+  #     - "${AZURITE_PORT_QUEUE:-10001}:10001"
+  #     - "${AZURITE_PORT_TABLE:-10002}:10002"
+  #   volumes:
+  #     - azurite_data:/data
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pm_pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: pm_pgadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+  #   ports:
+  #     - "${PGADMIN_PORT:-5050}:80"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
@@ -89,7 +89,7 @@ services:
       - prometheus
 
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/jaeger:latest
     container_name: pm_jaeger
     restart: unless-stopped
     environment:
@@ -115,14 +115,14 @@ services:
       Blob__ConnectionString: ${BLOB__CONNECTIONSTRING}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
     ports:
-      - "${API_PORT:-5000}:8080"
+      - "${API_PORT:-5001}:8080"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      azurite:
-        condition: service_started
+      # azurite:
+      #   condition: service_started
 
   frontend:
     build:
@@ -144,6 +144,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  azurite_data:
+  # azurite_data:
   prometheus_data:
   grafana_data:
