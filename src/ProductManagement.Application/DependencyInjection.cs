@@ -2,6 +2,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using ProductManagement.Application.Common.Behaviours;
+using ProductManagement.Application.Common.Interfaces;
+using ProductManagement.Application.Common.Services;
 
 namespace ProductManagement.Application;
 
@@ -19,6 +21,7 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<ISlugService, SlugService>();
 
         return services;
     }

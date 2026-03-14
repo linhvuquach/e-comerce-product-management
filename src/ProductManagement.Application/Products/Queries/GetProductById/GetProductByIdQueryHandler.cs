@@ -1,4 +1,5 @@
 using MediatR;
+using ProductManagement.Application.Common.Cache;
 using ProductManagement.Application.Common.Interfaces;
 using ProductManagement.Application.Products.Dtos;
 using ProductManagement.Domain.Entities;
@@ -6,20 +7,31 @@ using ProductManagement.Domain.Exceptions;
 
 namespace ProductManagement.Application.Products.Queries.GetProductById;
 
-internal sealed class GetProductByIdQueryHandler(IProductRepository productRepository)
+internal sealed class GetProductByIdQueryHandler(
+    IProductRepository productRepository,
+    ICacheService cache)
     : IRequestHandler<GetProductByIdQuery, GetProductByIdResult>
 {
+    private static readonly TimeSpan _productCacheTtl = TimeSpan.FromMinutes(10);
+
     public async Task<GetProductByIdResult> Handle(
         GetProductByIdQuery request,
         CancellationToken cancellationToken)
     {
+        var cacheKey = ProductCacheKeys.Product(request.Id);
+        var cached = await cache.GetAsync<GetProductByIdResult>(cacheKey, cancellationToken);
+        if (cached is not null)
+            return cached;
+
         var (product, xmin) = await productRepository.GetWithVariantsImagesAsync(
             request.Id, cancellationToken);
 
         if (product is null)
             throw new ProductNotFoundException(request.Id);
 
-        return new GetProductByIdResult(MapToDetail(product), xmin);
+        var result = new GetProductByIdResult(MapToDetail(product), xmin);
+        await cache.SetAsync(cacheKey, result, _productCacheTtl, cancellationToken);
+        return result;
     }
 
     private static ProductDetailDto MapToDetail(Product p) => new(

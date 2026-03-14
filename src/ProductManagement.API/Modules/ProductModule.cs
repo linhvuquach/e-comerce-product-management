@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Carter;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using ProductManagement.Application.Products.Commands.CreateProduct;
 using ProductManagement.Application.Products.Commands.DeleteProduct;
 using ProductManagement.Application.Products.Commands.PatchProductStatus;
@@ -68,12 +69,14 @@ public sealed class ProductModule : ICarterModule
         string? status = null,
         decimal? minPrice = null,
         decimal? maxPrice = null,
+        [FromQuery] string[]? sizes = null,
+        [FromQuery] string[]? colors = null,
         string? sortBy = null,
         bool sortDescending = true,
         CancellationToken ct = default)
     {
         var result = await sender.Send(
-            new GetProductsQuery(page, pageSize, q, categoryId, status, minPrice, maxPrice, sortBy, sortDescending), ct);
+            new GetProductsQuery(page, pageSize, q, categoryId, status, minPrice, maxPrice, sizes, colors, sortBy, sortDescending), ct);
         return Results.Ok(result);
     }
 

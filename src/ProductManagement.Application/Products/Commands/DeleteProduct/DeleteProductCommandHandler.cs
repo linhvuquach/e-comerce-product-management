@@ -1,12 +1,14 @@
 using MediatR;
 using ProductManagement.Application.Common.Interfaces;
+using ProductManagement.Application.Products.Events;
 using ProductManagement.Domain.Exceptions;
 
 namespace ProductManagement.Application.Products.Commands.DeleteProduct;
 
 internal sealed class DeleteProductCommandHandler(
     IProductRepository productRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IPublisher publisher)
     : IRequestHandler<DeleteProductCommand>
 {
     public async Task Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -16,5 +18,7 @@ internal sealed class DeleteProductCommandHandler(
 
         await productRepository.DeleteAsync(product, cancellationToken);
         await unitOfWork.SaveChangeAsync(cancellationToken);
+
+        await publisher.Publish(new ProductChangedNotification(request.Id), cancellationToken);
     }
 }

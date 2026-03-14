@@ -1,22 +1,38 @@
 using MediatR;
+using ProductManagement.Application.Common.Cache;
 using ProductManagement.Application.Common.Interfaces;
+using ProductManagement.Application.Common.Models;
 using ProductManagement.Application.Products.Dtos;
 using ProductManagement.Domain.Entities;
 
 namespace ProductManagement.Application.Products.Queries.GetProducts;
 
-internal sealed class GetProductsQueryHandler(IProductRepository productRepository)
+internal sealed class GetProductsQueryHandler(
+    IProductRepository productRepository,
+    ICacheService cache)
     : IRequestHandler<GetProductsQuery, PagedResult<ProductSummaryDto>>
 {
-    private const int _maxPageSize = 100;
+    private static readonly TimeSpan _listCacheTtl = TimeSpan.FromMinutes(5);
 
     public async Task<PagedResult<ProductSummaryDto>> Handle(
         GetProductsQuery request,
         CancellationToken cancellationToken)
     {
-        var pageSize = Math.Min(request.PageSize, _maxPageSize);
-        var page = Math.Max(request.Page, 1);
+        var pageSize = new PaginationParams { Page = request.Page, PageSize = request.PageSize }.PageSizeClamped;
+        var page = new PaginationParams { Page = request.Page, PageSize = request.PageSize }.PageClamped;
 
+        var cacheKey = BuildCacheKey(page, pageSize, request);
+
+        return await cache.GetOrSetAsync(
+            cacheKey,
+            () => FetchFromDbAsync(page, pageSize, request, cancellationToken),
+            _listCacheTtl,
+            cancellationToken);
+    }
+
+    private async Task<PagedResult<ProductSummaryDto>> FetchFromDbAsync(
+        int page, int pageSize, GetProductsQuery request, CancellationToken cancellationToken)
+    {
         var (items, totalCount) = await productRepository.GetPagedAsync(
             page,
             pageSize,
@@ -25,6 +41,8 @@ internal sealed class GetProductsQueryHandler(IProductRepository productReposito
             request.Status,
             request.MinPrice,
             request.MaxPrice,
+            request.Sizes,
+            request.Colors,
             request.SortBy,
             request.SortDescending,
             cancellationToken);
@@ -32,6 +50,12 @@ internal sealed class GetProductsQueryHandler(IProductRepository productReposito
         var dtos = items.Select(MapToSummary).ToList();
         return new PagedResult<ProductSummaryDto>(dtos, totalCount, page, pageSize);
     }
+
+    private static string BuildCacheKey(int page, int pageSize, GetProductsQuery r) =>
+        $"{ProductCacheKeys.ListKeyPrefix}p={page}&ps={pageSize}&q={r.Q}&cat={r.CategoryId}&s={r.Status}" +
+        $"&min={r.MinPrice}&max={r.MaxPrice}" +
+        $"&sizes={string.Join(',', r.Sizes ?? [])}&colors={string.Join(',', r.Colors ?? [])}" +
+        $"&sort={r.SortBy}&desc={r.SortDescending}";
 
     private static ProductSummaryDto MapToSummary(Product p) => new(
         p.Id,
