@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
-import { useProduct } from '../../features/products/hooks/useProducts'
-import { usePatchProductStatus, useDeleteProduct } from '../../features/products/hooks/useProductMutations'
-import ProductStatusBadge from '../../features/products/components/ProductStatusBadge'
-import VariantList from '../../features/products/components/VariantList'
-import { FullPageSpinner } from '../../components/ui/Spinner'
-import { ConfirmModal } from '../../components/ui/Modal'
-import Button from '../../components/ui/Button'
-import Select from '../../components/ui/Select'
-import type { ProductStatus } from '../../types/product'
+import { useProduct } from '@/features/products/hooks/useProducts'
+import { usePatchProductStatus, useDeleteProduct } from '@/features/products/hooks/useProductMutations'
+import ProductStatusBadge from '@/features/products/components/ProductStatusBadge'
+import VariantList from '@/features/products/components/VariantList'
+import { FullPageSpinner } from '@/components/ui/Spinner'
+import { ConfirmModal } from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
+import type { ProductStatus } from '@/types/product'
 
 const STATUS_OPTIONS = [
   { value: 'Draft', label: 'Draft' },
@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link to="/products" className="text-sm text-brand-600 hover:underline">
+          <Link to="/" className="text-sm text-brand-600 hover:underline">
             ← Products
           </Link>
           <h1 className="mt-1 text-2xl font-semibold text-gray-900">{product.name}</h1>
@@ -170,7 +170,7 @@ export default function ProductDetailPage() {
         loading={isDeleting}
         onConfirm={() =>
           deleteProduct(id!, {
-            onSuccess: () => navigate('/products'),
+            onSuccess: () => navigate('/'),
           })
         }
         onClose={() => setConfirmDelete(false)}

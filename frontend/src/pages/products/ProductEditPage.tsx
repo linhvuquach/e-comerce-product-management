@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router'
-import { useProduct } from '../../features/products/hooks/useProducts'
-import ProductForm from '../../features/products/components/ProductForm'
-import { FullPageSpinner } from '../../components/ui/Spinner'
+import { useProduct } from '@/features/products/hooks/useProducts'
+import ProductForm from '@/features/products/components/ProductForm'
+import { FullPageSpinner } from '@/components/ui/Spinner'
 
 export default function ProductEditPage() {
   const { id } = useParams<{ id: string }>()

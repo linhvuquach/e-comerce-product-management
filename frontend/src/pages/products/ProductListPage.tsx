@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router'
-import { useProducts } from '../../features/products/hooks/useProducts'
-import ProductTable from '../../features/products/components/ProductTable'
-import EmptyState from '../../components/ui/EmptyState'
-import SearchBar from '../../components/ui/SearchBar'
-import { useDebounce } from '../../lib/hooks/useDebounce'
+import { useProducts } from '@/features/products/hooks/useProducts'
+import ProductTable from '@/features/products/components/ProductTable'
+import EmptyState from '@/components/ui/EmptyState'
+import SearchBar from '@/components/ui/SearchBar'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 
 export default function ProductListPage() {
   const [searchInput, setSearchInput] = useState('')
