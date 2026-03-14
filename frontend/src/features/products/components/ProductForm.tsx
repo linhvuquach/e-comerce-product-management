@@ -3,13 +3,13 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import Input from '../../../components/ui/Input'
-import Select from '../../../components/ui/Select'
-import Button from '../../../components/ui/Button'
-import { updateProductSchema } from '../../../lib/schemas'
-import type { ProductDetailDto } from '../../../types/product'
-import { categoriesApi } from '../../../api/categories'
-import { useCreateProduct, useUpdateProduct } from '../hooks/useProductMutations'
+import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
+import { updateProductSchema } from '@/lib/schemas'
+import type { ProductDetailDto } from '@/types/product'
+import { categoriesApi } from '@/api/categories'
+import { useCreateProduct, useUpdateProduct } from '@/features/products/hooks/useProductMutations'
 
 // ── Flatten recursive category tree for a <select> ──────────────────────
 
@@ -187,7 +187,7 @@ export default function ProductForm({ product, etag }: ProductFormProps) {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => navigate(isEdit ? `/products/${product!.id}` : '/products')}
+          onClick={() => navigate(isEdit ? `/products/${product!.id}` : '/')}
         >
           Cancel
         </Button>

@@ -1,5 +1,5 @@
-import Badge from '../../../components/ui/Badge'
-import type { ProductStatus } from '../../../types/product'
+import Badge from '@/components/ui/Badge'
+import type { ProductStatus } from '@/types/product'
 
 const variantMap: Record<ProductStatus, 'default' | 'success' | 'warning' | 'danger'> = {
   Draft: 'default',

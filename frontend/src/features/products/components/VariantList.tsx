@@ -1,6 +1,6 @@
-import type { ProductVariantDto } from '../../../types/product'
-import Badge from '../../../components/ui/Badge'
-import EmptyState from '../../../components/ui/EmptyState'
+import type { ProductVariantDto } from '@/types/product'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
 
 interface VariantListProps {
   variants: ProductVariantDto[]

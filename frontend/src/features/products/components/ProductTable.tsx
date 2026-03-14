@@ -6,11 +6,11 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table'
 import { Link } from 'react-router'
-import type { ProductSummaryDto } from '../../../types/product'
-import ProductStatusBadge from './ProductStatusBadge'
-import { ConfirmModal } from '../../../components/ui/Modal'
-import { Spinner } from '../../../components'
-import { useDeleteProduct } from '../hooks/useProductMutations'
+import type { ProductSummaryDto } from '@/types/product'
+import ProductStatusBadge from '@/features/products/components/ProductStatusBadge'
+import { ConfirmModal } from '@/components/ui/Modal'
+import { Spinner } from '@/components'
+import { useDeleteProduct } from '@/features/products/hooks/useProductMutations'
 
 const col = createColumnHelper<ProductSummaryDto>()
 

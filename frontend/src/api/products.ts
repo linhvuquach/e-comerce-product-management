@@ -1,11 +1,11 @@
-import apiClient from './client'
+import apiClient from '@/api/client'
 import type {
   ProductSummaryDto,
   ProductDetailDto,
   PagedResult,
   CreateProductRequest,
   UpdateProductRequest,
-} from '../types/product'
+} from '@/types/product'
 
 export interface GetProductsParams {
   q?: string

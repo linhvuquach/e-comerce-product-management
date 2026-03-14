@@ -1,5 +1,5 @@
-import apiClient from './client'
-import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '../types/category'
+import apiClient from '@/api/client'
+import type { CategoryDto, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/category'
 
 export const categoriesApi = {
   tree: () =>

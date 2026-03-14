@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { productsApi, type GetProductsParams } from '../../../api/products'
+import { productsApi, type GetProductsParams } from '@/api/products'
 
 export const productKeys = {
   all: ['products'] as const,
