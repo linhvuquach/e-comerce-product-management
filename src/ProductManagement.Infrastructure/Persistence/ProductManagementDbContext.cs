@@ -18,6 +18,7 @@ public sealed class ProductManagementDbContext(DbContextOptions<ProductManagemen
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("pg_trgm");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProductManagementDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }

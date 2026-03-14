@@ -11,5 +11,7 @@ public sealed record GetProductsQuery(
     string? Status = null,
     decimal? MinPrice = null,
     decimal? MaxPrice = null,
+    string[]? Sizes = null,
+    string[]? Colors = null,
     string? SortBy = null,
     bool SortDescending = true) : IRequest<PagedResult<ProductSummaryDto>>;

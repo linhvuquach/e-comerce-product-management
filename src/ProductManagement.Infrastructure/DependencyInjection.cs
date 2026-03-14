@@ -1,8 +1,11 @@
+using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using ProductManagement.Application.Common.Interfaces;
+using ProductManagement.Application.Common.Options;
+using ProductManagement.Infrastructure.BackgroundServices;
 using ProductManagement.Infrastructure.Caching;
 using ProductManagement.Infrastructure.Persistence;
 using ProductManagement.Infrastructure.Persistence.Repositories;
@@ -18,6 +21,7 @@ public static class DependencyInjection
     {
         services.AddDatabase(configuration);
         services.AddRedisCache(configuration);
+        services.AddHostedService<ProductCacheWarmingService>();
         return services;
     }
 
@@ -28,6 +32,7 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
+        services.Configure<SearchOptions>(configuration.GetSection(SearchOptions.Section));
         services.AddDbContext<ProductManagementDbContext>(options =>
         {
             options.UseNpgsql(connectionString, npgsql =>

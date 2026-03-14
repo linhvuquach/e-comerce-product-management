@@ -15,6 +15,8 @@ public interface IProductRepository : IRepository<Product>
         string? status = null,
         decimal? minPrice = null,
         decimal? maxPrice = null,
+        string[]? sizes = null,
+        string[]? colors = null,
         string? sortBy = null,
         bool sortDescending = true,
         CancellationToken cancellationToken = default);
