@@ -1,4 +1,4 @@
-// ── DTOs (mirrors backend response shapes) ────────────────────────────────
+// ── DTOs (mirrors backend camelCase response shapes) ──────────────────────
 
 export type ProductStatus = 'Draft' | 'Active' | 'Archived'
 
@@ -6,17 +6,19 @@ export interface ProductVariantDto {
   id: string
   sku: string
   size: string
-  color: string
-  colorHex: string
+  color: string | null
+  colorHex: string | null
   priceOverride: number | null
   effectivePrice: number
-  attributes: Record<string, string>
+  stockQuantity: number
   isActive: boolean
+  attributes: Record<string, unknown> | null
 }
 
 export interface ProductImageDto {
   id: string
-  cdnUrl: string
+  cdnUrl: string | null
+  blobUrl: string
   altText: string | null
   sortOrder: number
   isPrimary: boolean
@@ -28,50 +30,58 @@ export interface ProductSummaryDto {
   name: string
   slug: string
   brand: string
+  categoryId: string
+  categoryName: string
   basePrice: number
   currency: string
   status: ProductStatus
   primaryImageUrl: string | null
   variantCount: number
-  categoryId: string
   createdAt: string
 }
 
-export interface ProductDetailDto extends ProductSummaryDto {
+export interface ProductDetailDto {
+  id: string
+  name: string
+  slug: string
   description: string | null
-  attributes: Record<string, string>
+  brand: string
+  categoryId: string
+  categoryName: string
+  basePrice: number
+  currency: string
+  status: ProductStatus
+  attributes: Record<string, unknown> | null
   variants: ProductVariantDto[]
   images: ProductImageDto[]
+  createdAt: string
   updatedAt: string | null
 }
 
+/** Flat pagination envelope returned by the backend */
 export interface PagedResult<T> {
   data: T[]
-  pagination: {
-    page: number
-    pageSize: number
-    totalItems: number
-    totalPages: number
-  }
+  totalItems: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 // ── Request shapes ─────────────────────────────────────────────────────────
 
+/** POST /api/v1/products — no status field; product starts as Draft */
 export interface CreateProductRequest {
   name: string
-  slug?: string
-  description?: string
   brand: string
   categoryId: string
   basePrice: number
-  currency?: string
-  status: ProductStatus
-  attributes?: Record<string, string>
+  currency: string
+  description?: string
+  attributes?: Record<string, unknown>
 }
 
-export interface UpdateProductRequest extends CreateProductRequest {
-  rowVersion: string
-}
+/** PUT /api/v1/products/:id — same shape; ETag sent as If-Match header */
+export type UpdateProductRequest = CreateProductRequest
 
 export interface CreateVariantRequest {
   sku: string
@@ -79,5 +89,5 @@ export interface CreateVariantRequest {
   color: string
   colorHex: string
   priceOverride?: number
-  attributes?: Record<string, string>
+  attributes?: Record<string, unknown>
 }
