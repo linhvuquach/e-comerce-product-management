@@ -6,6 +6,9 @@
     <Project Path="src/ProductManagement.Infrastructure/ProductManagement.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Integration/">
+    <Project Path="tests/Integration/ProductManagement.Integration.Tests/ProductManagement.Integration.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Unit/">
     <Project Path="tests/Unit/ProductManagement.Unit.Tests/ProductManagement.Unit.Tests.csproj" />
   </Folder>

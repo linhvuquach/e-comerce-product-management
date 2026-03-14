@@ -174,3 +174,6 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapMetrics("/metrics");
 
 app.Run();
+
+// Needed for WebApplicationFactory<Program> in integration tests
+public partial class Program { }
