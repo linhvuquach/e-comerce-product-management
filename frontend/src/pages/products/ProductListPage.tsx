@@ -5,6 +5,7 @@ import ProductTable from '@/features/products/components/ProductTable'
 import EmptyState from '@/components/ui/EmptyState'
 import SearchBar from '@/components/ui/SearchBar'
 import { useDebounce } from '@/lib/hooks/useDebounce'
+import FilterPanel from '@/features/products/components/FilterPanel'
 
 export default function ProductListPage() {
   const [searchInput, setSearchInput] = useState('')
@@ -46,12 +47,17 @@ export default function ProductListPage() {
         </Link>
       </div>
 
-      <SearchBar
-        value={searchInput}
-        onChange={handleSearchChange}
-        placeholder="Search products…"
-        className="max-w-md"
-      />
+      {/* Search + Filter toolbar */}
+      <div className="flex items-center gap-3">
+        <SearchBar
+          value={searchInput}
+          onChange={handleSearchChange}
+          placeholder="Search products…"
+          className="max-w-md"
+        />
+        {/* T7.2 — FilterPanel renders null until implemented */}
+        <FilterPanel />
+      </div>
 
       {isEmpty && !q ? (
         <EmptyState
