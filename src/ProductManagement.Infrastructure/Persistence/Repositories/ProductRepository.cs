@@ -1,10 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NpgsqlTypes;
 using ProductManagement.Application.Common.Interfaces;
 using ProductManagement.Application.Common.Options;
 using ProductManagement.Domain.Entities;
+using ProductManagement.Domain.ValueObjects;
 
 namespace ProductManagement.Infrastructure.Persistence.Repositories;
 
@@ -15,8 +15,11 @@ internal sealed class ProductRepository(
 {
     private readonly double _triggramThreshold = searchOptions.Value.TriggramThreshold;
 
-    public async Task<Product?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default) =>
-        await DbSet.FirstOrDefaultAsync(p => p.Slug.Value == slug, cancellationToken);
+    public async Task<Product?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        var slugObj = Slug.FromRaw(slug);
+        return await DbSet.FirstOrDefaultAsync(p => p.Slug == slugObj, cancellationToken);
+    }
 
     public async Task<(Product? Product, uint Xmin)> GetWithVariantsImagesAsync(
         Guid id, CancellationToken cancellationToken = default)
@@ -36,7 +39,8 @@ internal sealed class ProductRepository(
 
     public async Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var query = DbSet.Where(p => p.Slug.Value == slug);
+        var slugObj = Slug.FromRaw(slug);
+        var query = DbSet.Where(p => p.Slug == slugObj);
         if (excludeId.HasValue)
             query = query.Where(p => p.Id != excludeId.Value);
 
