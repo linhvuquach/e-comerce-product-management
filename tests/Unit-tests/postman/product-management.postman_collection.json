@@ -1,0 +1,455 @@
+{
+  "info": {
+    "_postman_id": "9f61855c-4219-4009-870d-2c4835005dd3",
+    "name": "Product Management API",
+    "description": "All endpoints for the e-commerce Product Management API (v1).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4477053"
+  },
+  "item": [
+    {
+      "name": "Get Products (paginated)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Response has pagination meta', () => {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('totalItems');",
+              "    pm.expect(body).to.have.property('page');",
+              "    pm.expect(body).to.have.property('pageSize');",
+              "    pm.expect(body).to.have.property('totalPages');",
+              "});",
+              "",
+              "// set environment variable",
+              "const response = pm.response.json();",
+              "let productId = response.data[0].id;",
+              "",
+              "pm.environment.set(\"product_id\", productId);",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products?page=1&pageSize=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (1-based)"
+            },
+            {
+              "key": "pageSize",
+              "value": "20",
+              "description": "Items per page (max 100)"
+            },
+            {
+              "key": "categoryId",
+              "value": "",
+              "description": "Filter by category GUID (includes subcategories)",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Returns a paginated list of products. Supports full-text search (FTS + trigram), filtering by category (subtree), status, price range, sizes, colors, and sorting."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Products (paginated + filtered)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Response has items array', () => {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('data');",
+              "    pm.expect(body.data).to.be.an('array');",
+              "});",
+              "pm.test('Response has pagination meta', () => {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('totalItems');",
+              "    pm.expect(body).to.have.property('page');",
+              "    pm.expect(body).to.have.property('pageSize');",
+              "    pm.expect(body).to.have.property('totalPages');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products?page=1&pageSize=20&status=Active&minPrice=10&maxPrice=500&sizes=M&colors=Blue&sortBy=price&sortDescending=true&q=Slim Fit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (1-based)"
+            },
+            {
+              "key": "pageSize",
+              "value": "20",
+              "description": "Items per page (max 100)"
+            },
+            {
+              "key": "categoryId",
+              "value": "",
+              "description": "Filter by category GUID (includes subcategories)",
+              "disabled": true
+            },
+            {
+              "key": "status",
+              "value": "Active",
+              "description": "Draft | Active | Archived"
+            },
+            {
+              "key": "minPrice",
+              "value": "10",
+              "description": "Minimum base price"
+            },
+            {
+              "key": "maxPrice",
+              "value": "500",
+              "description": "Maximum base price"
+            },
+            {
+              "key": "sizes",
+              "value": "M"
+            },
+            {
+              "key": "colors",
+              "value": "Blue"
+            },
+            {
+              "key": "sortBy",
+              "value": "price",
+              "description": "name | price | createdAt"
+            },
+            {
+              "key": "sortDescending",
+              "value": "true"
+            },
+            {
+              "key": "q",
+              "value": "Slim Fit"
+            }
+          ]
+        },
+        "description": "Returns a paginated list of products. Supports full-text search (FTS + trigram), filtering by category (subtree), status, price range, sizes, colors, and sorting."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Product By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('ETag header present', () => {",
+              "    pm.expect(pm.response.headers.get('ETag')).to.not.be.empty;",
+              "});",
+              "const etag = pm.response.headers.get('ETag');",
+              "if (etag) pm.environment.set('etag', etag);",
+              "pm.test('Response has id field', () => {",
+              "    pm.expect(pm.response.json()).to.have.property('id');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products/{{product_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products",
+            "{{product_id}}"
+          ]
+        },
+        "description": "Returns full product detail. The response includes an ETag header used for optimistic concurrency on updates."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Category Tree",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Response is an array', () => {",
+              "    pm.expect(pm.response.json()).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "categories"
+          ]
+        },
+        "description": "Returns the full category tree. Use the returned category IDs as the categoryId filter in product queries."
+      },
+      "response": []
+    },
+    {
+      "name": "Create Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+              "const id = pm.response.json();",
+              "pm.test('Response is a GUID', () => {",
+              "    pm.expect(id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+              "});",
+              "// set environment variable",
+              "pm.environment.set('product_id', id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Air Max 2025\",\n  \"brand\": \"Nike\",\n  \"categoryId\": \"{{category_id}}\",\n  \"basePrice\": 129.99,\n  \"currency\": \"USD\",\n  \"description\": \"Lightweight running shoe with responsive cushioning.\",\n  \"attributes\": {\n    \"material\": \"mesh\",\n    \"weight\": \"280g\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products"
+          ]
+        },
+        "description": "Creates a new product in Draft status. Returns the new product GUID. Subject to write rate limiting (fixed window per IP)."
+      },
+      "response": []
+    },
+    {
+      "name": "Patch Product Status",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"Active\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products/{{product_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products",
+            "{{product_id}}",
+            "status"
+          ]
+        },
+        "description": "Updates a product's status. Valid transitions: Draft → Active, Active → Archived. Returns 422 for invalid transitions. Subject to write rate limiting."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Product (Full)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "If-Match",
+            "value": "{{etag}}",
+            "description": "Required — obtain from Get Product By ID response ETag header"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Air Max 2025 Updated\",\n  \"brand\": \"Nike\",\n  \"categoryId\": \"{{category_id}}\",\n  \"basePrice\": 139.99,\n  \"currency\": \"USD\",\n  \"description\": \"Updated description with improved cushioning.\",\n  \"attributes\": {\n    \"material\": \"mesh\",\n    \"weight\": \"275g\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products/{{product_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products",
+            "{{product_id}}"
+          ]
+        },
+        "description": "Full update of a product. Requires an If-Match header with the current ETag (from Get Product By ID). Returns 428 if the header is missing, 409 if the ETag is stale. Subject to write rate limiting."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Product (Soft)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/products/{{product_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "{{api_version}}",
+            "products",
+            "{{product_id}}"
+          ]
+        },
+        "description": "Soft-deletes a product (sets IsDeleted = true). The product no longer appears in list queries. Subject to write rate limiting."
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "etag",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": ""
+    }
+  ]
+}

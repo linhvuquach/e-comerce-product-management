@@ -96,7 +96,16 @@ internal sealed class ProductRepository(
             query = query.Where(p => p.BasePrice.Amount <= maxPrice.Value);
 
         if (sizes?.Length > 0)
-            query = query.Where(p => p.Variants.Any(v => v.IsActive && sizes.Contains(v.Size.ToString())));
+        {
+            var parsedSizes = sizes
+                .Select(s => Enum.TryParse<Domain.Enums.ProductSize>(s, true, out var ps) ? (Domain.Enums.ProductSize?)ps : null)
+                .Where(s => s.HasValue)
+                .Select(s => s!.Value)
+                .ToList();
+
+            if (parsedSizes.Count > 0)
+                query = query.Where(p => p.Variants.Any(v => v.IsActive && parsedSizes.Contains(v.Size)));
+        }
 
         if (colors?.Length > 0)
             query = query.Where(p => p.Variants.Any(v => v.IsActive && v.Color != null && colors.Contains(v.Color)));
