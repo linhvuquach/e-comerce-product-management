@@ -1,87 +1,135 @@
-# name: Frontend CI
+name: Build & Push — Frontend
 
-# on:
-#   push:
-#     branches: [master, main]
-#     paths:
-#       - "frontend/**"
-#       - ".github/workflows/frontend.yml"
-#   pull_request:
-#     branches: [master, main]
-#     paths:
-#       - "frontend/**"
-#       - ".github/workflows/frontend.yml"
+on:
+  push:
+    branches: [master]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/build-push-fe.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/build-push-fe.yml"
 
-# jobs:
-#   lint-test-build:
-#     name: Lint, Test & Build
-#     runs-on: ubuntu-latest
-#     defaults:
-#       run:
-#         working-directory: frontend
+permissions:
+  id-token: write  # OIDC federated auth → Azure (no stored credentials)
+  contents: write  # commit GitOps image tag update back to repo
 
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
+env:
+  REGISTRY: ${{ vars.ACR_LOGIN_SERVER }}  # e.g. pmdevacr.azurecr.io
 
-#       - name: Setup Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version-file: ".nvmrc"
+jobs:
+  # ── CI gate ────────────────────────────────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
 
-#       - name: Setup pnpm
-#         uses: pnpm/action-setup@v4
-#         with:
-#           version: latest
+    steps:
+      - uses: actions/checkout@v4
 
-#       - name: Get pnpm store directory
-#         id: pnpm-cache
-#         run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-#       - name: Cache pnpm store
-#         uses: actions/cache@v4
-#         with:
-#           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-#           key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-#           restore-keys: |
-#             ${{ runner.os }}-pnpm-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-#       - name: Install dependencies
-#         run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
 
-#       - name: Type check
-#         run: pnpm tsc --noEmit
+      - name: Type check
+        working-directory: frontend
+        run: pnpm tsc
 
-#       - name: Lint
-#         run: pnpm lint
+      - name: Lint
+        working-directory: frontend
+        run: pnpm lint
 
-#       - name: Build
-#         run: pnpm build
+      - name: Test
+        working-directory: frontend
+        run: pnpm test:coverage
 
-#       - name: Upload build artifact
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: frontend-dist
-#           path: frontend/dist
-#           retention-days: 7
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 7
 
-#   docker-build:
-#     name: Docker Build Validation
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
+  # ── Build & push (master only, gated on test) ──────────────────────────────
+  build:
+    name: Build & Push frontend image
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
 
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v3
+    steps:
+      - uses: actions/checkout@v4
 
-#       - name: Build frontend image
-#         uses: docker/build-push-action@v5
-#         with:
-#           context: ./frontend
-#           file: frontend/Dockerfile
-#           target: builder
-#           push: false
-#           tags: product-management-frontend:ci
-#           cache-from: type=gha
-#           cache-to: type=gha,mode=max
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login
+        run: az acr login --name ${{ env.REGISTRY }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/frontend
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/frontend:cache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/frontend:cache,mode=max
+
+  # ── GitOps tag update (gated on build) ────────────────────────────────────
+  update-gitops:
+    name: Update GitOps — frontend image tag
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Update frontend image tag in prod values
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: yq e -i '.frontend.image.tag = strenv(IMAGE_TAG)' infra/helm/umbrella/values/prod.yaml
+
+      - name: Commit and push
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/helm/umbrella/values/prod.yaml
+          git diff --staged --quiet || git commit -m "chore(deploy): update frontend image tag to ${IMAGE_TAG} [skip ci]"
+          git push

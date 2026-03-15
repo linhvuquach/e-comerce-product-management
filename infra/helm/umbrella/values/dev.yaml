@@ -1,0 +1,70 @@
+# ── dev environment values ──────────────────────────────────────────────────
+# Image tags overridden by CI pipeline via --set api.image.tag=$GIT_SHA
+
+api:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  podDisruptionBudget:
+    enabled: false
+  auth:
+    enabled: false
+  serviceAccount:
+    annotations:
+      azure.workload.identity/client-id: ""  # set by deploy.sh from TF output
+  cors:
+    allowedOrigins:
+      - "http://localhost:5173"
+      - "https://dev.app.example.com"
+  rateLimit:
+    writeRequestsPerMinute: 200
+  observability:
+    otlpEndpoint: "http://product-management-jaeger-collector:4317"
+
+frontend:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  podDisruptionBudget:
+    enabled: false
+  ingress:
+    hosts:
+      - host: dev.app.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: frontend-tls-dev
+        hosts: ["dev.app.example.com"]
+  apiServiceUrl: "http://product-management-api"
+
+# Managed services used in dev (no in-cluster PostgreSQL/Redis)
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+# Observability — enabled in all environments
+kube-prometheus-stack:
+  enabled: true
+  grafana:
+    adminPassword: "admin"  # change post-deploy
+    persistence:
+      enabled: false
+
+jaeger:
+  enabled: true
+  allInOne:
+    enabled: true
+
+# Platform
+external-secrets:
+  enabled: true
+
+cert-manager:
+  enabled: true
+  installCRDs: true
+
+ingress-nginx:
+  enabled: true

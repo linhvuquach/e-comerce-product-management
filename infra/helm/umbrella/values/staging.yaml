@@ -1,0 +1,57 @@
+# ── staging environment values ──────────────────────────────────────────────
+api:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  auth:
+    enabled: false
+  cors:
+    allowedOrigins:
+      - "https://staging.app.example.com"
+  rateLimit:
+    writeRequestsPerMinute: 500
+  observability:
+    otlpEndpoint: "http://product-management-jaeger-collector:4317"
+
+frontend:
+  replicaCount: 2
+  ingress:
+    hosts:
+      - host: staging.app.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: frontend-tls-staging
+        hosts: ["staging.app.example.com"]
+
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+kube-prometheus-stack:
+  enabled: true
+  grafana:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+jaeger:
+  enabled: true
+
+external-secrets:
+  enabled: true
+
+cert-manager:
+  enabled: true
+  installCRDs: false  # installed once per cluster by dev env
+
+ingress-nginx:
+  enabled: true

@@ -1,0 +1,85 @@
+replicaCount: 2
+
+image:
+  repository: ""        # set by CI: <acr>.azurecr.io/api
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+serviceAccount:
+  create: true
+  name: "api"
+  annotations: {}  # set by umbrella: azure.workload.identity/client-id
+
+db:
+  host: ""          # set by deploy.sh / Helm values
+  name: "productmanagement"
+  user: "productmgmt"
+
+redis:
+  host: ""          # set by deploy.sh / Helm values
+  sslPort: 6380
+
+keyVault:
+  uri: ""           # set by deploy.sh / Helm values
+  secretRefreshInterval: "1h"
+
+auth:
+  enabled: false
+  authority: ""
+  audience: "api://product-management"
+
+observability:
+  otlpEndpoint: "http://jaeger-collector:4317"
+  serviceName: "product-management-api"
+
+cors:
+  allowedOrigins:
+    - "https://app.example.com"  # override per environment
+
+rateLimit:
+  writeRequestsPerMinute: 1000
+  queueLimit: 100
+
+nodeSelector: { workload: application }
+tolerations: []
+affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 20
+  periodSeconds: 15
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3

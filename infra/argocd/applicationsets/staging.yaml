@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: product-management-staging
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: staging
+            namespace: product-management-staging
+            valuesFile: staging.yaml
+  template:
+    metadata:
+      name: "product-management-{{env}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/<org>/e-comerce-product-management.git
+        targetRevision: HEAD
+        path: infra/helm/umbrella
+        helm:
+          valueFiles:
+            - "values/{{valuesFile}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: false   # manual sync in dev to avoid surprise restarts
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: product-management-prod
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: prod
+            namespace: product-management
+            valuesFile: prod.yaml
+  template:
+    metadata:
+      name: "product-management-{{env}}"
+      annotations:
+        # Image Updater: watch ACR for new api + frontend tags
+        argocd-image-updater.argoproj.io/image-list: |
+          api=<acr>.azurecr.io/api,frontend=<acr>.azurecr.io/frontend
+        argocd-image-updater.argoproj.io/api.update-strategy: digest
+        argocd-image-updater.argoproj.io/frontend.update-strategy: digest
+        argocd-image-updater.argoproj.io/write-back-method: git
+        argocd-image-updater.argoproj.io/git-branch: master
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/<org>/e-comerce-product-management.git
+        targetRevision: HEAD
+        path: infra/helm/umbrella
+        helm:
+          valueFiles:
+            - "values/{{valuesFile}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

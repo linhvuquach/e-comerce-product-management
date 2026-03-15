@@ -1,0 +1,9 @@
+location     = "australiaeast"
+prefix       = "pm"
+jwt_authority = "https://login.microsoftonline.com/<tenant-id>/v2.0"
+jwt_audience  = "api://product-management"
+
+tags = {
+  team        = "ecommerce"
+  cost-center = "engineering"
+}

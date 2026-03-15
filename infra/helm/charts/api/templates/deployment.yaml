@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels: {{ include "api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{ include "api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Force pod restart when secret values change
+        checksum/secret: {{ include (print $.Template.BasePath "/externalsecret.yaml") . | sha256sum }}
+      labels:
+        {{- include "api.selectorLabels" . | nindent 8 }}
+        # Required for Azure Workload Identity injection
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "api.fullname" . }}-secrets
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "api.fullname" . }}-secrets
+                  key: db-connection-string
+            - name: ConnectionStrings__Redis
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "api.fullname" . }}-secrets
+                  key: redis-connection-string
+            - name: Blob__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "api.fullname" . }}-secrets
+                  key: blob-connection-string
+            - name: Auth__Enabled
+              value: {{ .Values.auth.enabled | quote }}
+            - name: Auth__Authority
+              value: {{ .Values.auth.authority | quote }}
+            - name: Auth__Audience
+              value: {{ .Values.auth.audience | quote }}
+            - name: OpenTelemetry__OtlpEndpoint
+              value: {{ .Values.observability.otlpEndpoint | quote }}
+            - name: OpenTelemetry__ServiceName
+              value: {{ .Values.observability.serviceName | quote }}
+            - name: RateLimit__WriteRequestsPerMinute
+              value: {{ .Values.rateLimit.writeRequestsPerMinute | quote }}
+            - name: Cors__AllowedOrigins__0
+              value: {{ index .Values.cors.allowedOrigins 0 | quote }}
+          livenessProbe: {{ toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml .Values.readinessProbe | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
