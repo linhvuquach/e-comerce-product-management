@@ -2,7 +2,7 @@
 
 A production-grade product management system for retail/e-commerce applications. Built with **.NET 10**, **PostgreSQL**, **Redis**, **React 19**, and **TypeScript**.
 
-## Architecture
+## Overview Architecture
 
 ```mermaid
 graph TD
@@ -10,14 +10,19 @@ graph TD
         SPA["React 19 SPA<br/>(Vite + Tailwind CSS v4)<br/>TanStack Query · Zustand<br/>React Hook Form · Zod"]
     end
 
+    subgraph Edge / Gateway
+        GW["ingress-nginx<br/>(AKS Ingress + cert-manager TLS)<br/>—<br/>NGINX (local Docker Compose)"]
+    end
+
     subgraph Application Tier
         API[".NET 10 Web API<br/>Minimal APIs + Carter<br/>Clean Architecture · CQRS via MediatR<br/>Rate Limiting · JWT Auth stub"]
-        BG["Background Worker<br/>Cache Warm-up on startup"]
+        BG["Background Workers<br/>Cache warm-up · Outbox processor"]
     end
 
     subgraph Data Tier
-        PG[("PostgreSQL 17<br/>Primary (Write + Read)<br/>FTS via tsvector + pg_trgm")]
-        REDIS[("Redis 7<br/>Distributed Cache<br/>Cache-aside · Short TTLs")]
+        PG["PostgreSQL 17<br/>Primary (Write)<br/>Azure Flexible Server"]
+        REDIS["Redis 7<br/>Azure Cache for Redis<br/>Distributed Cache + Lock"]
+        BLOB["Azure Blob Storage<br/>(Azurite locally)<br/>Product Images"]
     end
 
     subgraph Observability
@@ -26,13 +31,31 @@ graph TD
         JAEGER["Jaeger<br/>:16686"]
     end
 
-    SPA -->|"HTTP REST /api/v1"| API
+    subgraph Secrets
+        KV["Azure Key Vault<br/>+ Workload Identity<br/>(no passwords in env)"]
+        ESO["External Secrets Operator<br/>K8s SecretStore → Key Vault"]
+    end
+
+    subgraph GitOps / Deploy
+        GHA["GitHub Actions<br/>test → build → tag update"]
+        ACR["Azure Container Registry"]
+        ARGOCD["ArgoCD<br/>Helm chart sync<br/>(self-heal + prune)"]
+    end
+
+    SPA -->|"HTTPS REST /api/v1"| GW
+    GW --> API
     API -->|"Cache-aside READ"| REDIS
     API -->|"Write / Complex Read"| PG
-    BG -->|"Pre-warm on startup"| REDIS
+    API -->|"Image upload / URL resolve"| BLOB
+    BG --> REDIS
     BG --> PG
+    ESO -->|"sync secrets"| KV
+    API -->|"reads K8s Secret"| ESO
     API -->|"OTLP traces"| JAEGER
     API -->|"/metrics scrape"| PROM --> GRAF
+    GHA -->|"push image"| ACR
+    GHA -->|"update image tag in git"| ARGOCD
+    ARGOCD -->|"helm upgrade"| API
 ```
 
 ### Data Flow
@@ -122,12 +145,15 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Access the apps:
+Access `http://localhost` to test the application.
+
+**Access the apps**:
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| `frontend` | http://localhost:5173 | React product management UI |
-| `api` | http://localhost:5001 | ASP.NET Core REST API |
+| `nginx` | http://localhost | Gateway — routes `/api/` → API, `/` → Frontend |
+| `frontend` | http://localhost:5173 | React product management UI (direct, dev only) |
+| `api` | http://localhost:5001 | ASP.NET Core REST API (direct) |
 | `api-docs` | http://localhost:5001/scalar/v1 | Interactive API explorer (Scalar) |
 | `prometheus` | http://localhost:9090 | Metrics scraper |
 | `grafana` | http://localhost:3000 | Metrics dashboard (admin / admin) |
@@ -162,6 +188,7 @@ dotnet run
 ```bash
 cd frontend
 pnpm install
+cp .env.example .env
 pnpm dev
 # UI available at http://localhost:5173
 ```
